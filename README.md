@@ -16,7 +16,7 @@ Phase 0 only:
 - Single-finger pan in adjustment mode
 - Cloudflare Worker static-assets deployment
 
-The complete product source of truth is stored in `docs/`.
+The complete product source of truth remains the Master PRD v5 package.
 
 ## Local development
 
