@@ -73,9 +73,22 @@ jobs:
         shell: bash
         run: |
           set +e
-          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
-            echo 'Missing CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID.' >&2
-            echo 'url=' >> "$GITHUB_OUTPUT"
+          echo 'url=' >> "$GITHUB_OUTPUT"
+          echo 'reason=unknown' >> "$GITHUB_OUTPUT"
+
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] && [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo 'Both Cloudflare repository secrets are missing.' >&2
+            echo 'reason=missing_api_token_and_account_id' >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo 'CLOUDFLARE_API_TOKEN is missing.' >&2
+            echo 'reason=missing_api_token' >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo 'CLOUDFLARE_ACCOUNT_ID is missing.' >&2
+            echo 'reason=missing_account_id' >> "$GITHUB_OUTPUT"
             exit 1
           fi
 
@@ -84,6 +97,14 @@ jobs:
           printf '%s\n' "$OUTPUT"
           URL="$(printf '%s\n' "$OUTPUT" | grep -Eo 'https://[^[:space:]]+\.workers\.dev' | tail -1 || true)"
           echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+          if [ "$STATUS" -eq 0 ]; then
+            echo 'reason=deployed' >> "$GITHUB_OUTPUT"
+          elif printf '%s\n' "$OUTPUT" | grep -qiE 'authentication|authorization|api token|permission|forbidden|unauthorized'; then
+            echo 'reason=cloudflare_auth_or_permission_error' >> "$GITHUB_OUTPUT"
+          else
+            echo 'reason=wrangler_deploy_error' >> "$GITHUB_OUTPUT"
+          fi
           exit "$STATUS"
 
       - name: Record deployment status
@@ -91,6 +112,7 @@ jobs:
         env:
           DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
           DEPLOY_URL: ${{ steps.deploy.outputs.url }}
+          DEPLOY_REASON: ${{ steps.deploy.outputs.reason }}
           SOURCE_COMMIT: ${{ github.sha }}
         shell: bash
         run: |
@@ -103,6 +125,7 @@ jobs:
               "worker": "dance-beat-trainer-v5",
               "repository": "yulicccccc/dance-beat-trainer-v5",
               "status": os.environ.get("DEPLOY_OUTCOME", "unknown"),
+              "reason": os.environ.get("DEPLOY_REASON") or "unknown",
               "url": os.environ.get("DEPLOY_URL") or None,
               "sourceCommit": os.environ.get("SOURCE_COMMIT"),
               "recordedAt": datetime.now(timezone.utc).isoformat(),
