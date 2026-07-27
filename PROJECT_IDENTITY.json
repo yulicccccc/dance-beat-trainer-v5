@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "project-identity-v1",
+  "projectId": "dance-beat-trainer-v5",
+  "displayName": "Dance Beat Trainer V5",
+  "repository": "yulicccccc/dance-beat-trainer-v5",
+  "productionBranch": "main",
+  "cloudflareWorker": "dance-beat-trainer-v5",
+  "productionBuildSource": "src/",
+  "productionOutput": "dist/",
+  "allowedRuntime": [
+    "Dance Beat Trainer React application",
+    "Dance Beat Trainer static asset Worker"
+  ],
+  "forbiddenProjectReferences": [
+    "yulicccccc/looptube-app",
+    "looptube-app",
+    "looptube-subtitle-api",
+    "LOOPTUBE_UPLOAD_TOKEN",
+    "LOOPTUBE_API_URL"
+  ],
+  "deploymentRule": "This repository may deploy only to the dance-beat-trainer-v5 Worker."
+}
