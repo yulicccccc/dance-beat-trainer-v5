@@ -1,48 +1,46 @@
 # Dance Beat Trainer V5
 
-Greenfield rewrite of the mobile-first dance practice app.
+Greenfield rewrite of the mobile-first dance learning app.
 
-## Current scope
+## Current deployed alpha
 
-Phase 0 only:
+The site now implements a usable slice of the confirmed Grill Me conclusions:
 
 - Strictly separate Practice and Review component trees
 - One full-width teacher player in Practice
 - Two players only in Review
-- Local video import
+- Local video import and local-first privacy
 - Contain / cover / original-size display
-- Mirror and rotation
-- Pinch zoom with two-finger centroid pan
-- Single-finger pan in adjustment mode
-- Cloudflare Worker static-assets deployment
+- Mirror, rotation, pinch zoom, centroid pan, and single-finger adjustment
+- Playback speed with original-pitch preference
+- Manual BPM, Tap Tempo, half/double BPM, and current-count calibration
+- Rolling 1–8 beat rail
+- Smart loops for 1–4, 5–8, and 1–8 with optional connection beats
+- Count-in
+- Phrase-bound Motion, Knowledge, and Learning notes
+- Continuous personal count-master recording alpha
+- Teacher-master-clock review sync with ±15 second offset
 
-The complete product source of truth remains the Master PRD v5 package.
+The complete source of truth remains in `docs/`.
 
-## Local development
+## Important status
+
+This is an **alpha**, not the complete PRD implementation. Tempo Map editing, automatic beat analysis, count segmentation, punch-in, full Motion Timeline, knowledge reuse, delayed learning review, project library, and export remain staged work.
+
+## Local verification
 
 ```bash
 npm install
-npm run dev
-```
-
-## Verification
-
-```bash
 npm test
 npm run build
 ```
 
-## Deployment target
+## Deployment isolation
 
-This repository is hard-locked to the new Worker:
+This repository is hard-locked to the Worker name:
 
 ```text
 dance-beat-trainer-v5
 ```
 
-It contains no Looptube target, no legacy Pages project, no custom route, and no custom domain.
-
-GitHub Actions requires repository secrets:
-
-- `CLOUDFLARE_API_TOKEN`
-- `CLOUDFLARE_ACCOUNT_ID`
+The workflow rejects legacy deployment names including Looptube and `dance-beat-pro`.
