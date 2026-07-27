@@ -1,6 +1,8 @@
-name: Deploy isolated Dance Beat Trainer Worker
+name: Verify and deploy isolated Dance Beat Trainer Worker
 
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
   workflow_dispatch:
@@ -9,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: dance-beat-trainer-v5-production
+  group: dance-beat-trainer-v5-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -17,7 +19,7 @@ env:
   EXPECTED_WORKER: dance-beat-trainer-v5
 
 jobs:
-  deploy:
+  verify-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Check out this repository
@@ -28,13 +30,22 @@ jobs:
         run: |
           set -euo pipefail
           test "$GITHUB_REPOSITORY" = "$EXPECTED_REPOSITORY"
+
           ACTUAL_WORKER="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync('wrangler.jsonc','utf8')); process.stdout.write(c.name)")"
+          IDENTITY_REPOSITORY="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync('PROJECT_IDENTITY.json','utf8')); process.stdout.write(c.repository)")"
+          IDENTITY_WORKER="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync('PROJECT_IDENTITY.json','utf8')); process.stdout.write(c.cloudflareWorker)")"
+
           test "$ACTUAL_WORKER" = "$EXPECTED_WORKER"
-          if grep -RniE 'looptube|dance-beat-pro' wrangler.jsonc .github/workflows; then
-            echo 'Forbidden legacy deployment target detected.' >&2
+          test "$IDENTITY_REPOSITORY" = "$EXPECTED_REPOSITORY"
+          test "$IDENTITY_WORKER" = "$EXPECTED_WORKER"
+
+          if grep -RniE 'looptube|dance-beat-pro' wrangler.jsonc package.json worker src; then
+            echo 'Forbidden legacy deployment target detected in runtime or deployment files.' >&2
             exit 1
           fi
-          echo "Safe deployment target: $ACTUAL_WORKER"
+
+          echo "Safe repository: $GITHUB_REPOSITORY"
+          echo "Safe Worker target: $ACTUAL_WORKER"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -51,6 +62,7 @@ jobs:
         run: npm run build
 
       - name: Deploy only the isolated Worker
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -60,6 +72,7 @@ jobs:
           npx wrangler deploy --config wrangler.jsonc --name "$EXPECTED_WORKER"
 
       - name: Deployment summary
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
         run: |
           {
             echo '## Isolated Worker deployment'
