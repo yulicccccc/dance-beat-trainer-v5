@@ -1,0 +1,8 @@
+.rhythm-status::after {
+  content: '这里分析的是上传视频文件的实际音轨速度，不是原曲资料库 BPM。例如原曲 127 BPM 的视频若被 0.8× 慢放，文件实际节奏约为 101.6 BPM。';
+  display: block;
+  margin-top: 8px;
+  color: #9da8bf;
+  font-size: .78rem;
+  line-height: 1.5;
+}
