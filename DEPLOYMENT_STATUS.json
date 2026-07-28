@@ -1,9 +1,9 @@
 {
   "worker": "dance-beat-trainer-v5",
   "repository": "yulicccccc/dance-beat-trainer-v5",
-  "status": "failure",
-  "reason": "missing_api_token_and_account_id",
-  "url": null,
-  "sourceCommit": "b1d6718f3d18096e9d15aa1024d6986f8e72b43e",
-  "recordedAt": "2026-07-27T16:22:40.847834+00:00"
+  "status": "success",
+  "reason": "deployed",
+  "url": "https://dance-beat-trainer-v5.qchen9108.workers.dev",
+  "sourceCommit": "f3372136ca3c472e6c3d8fb070a415e52f18ec8d",
+  "recordedAt": "2026-07-28T15:37:41.494231+00:00"
 }
