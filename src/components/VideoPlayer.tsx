@@ -1,5 +1,5 @@
 import {
-  ChangeEvent,
+  type ChangeEvent,
   forwardRef,
   useEffect,
   useImperativeHandle,
@@ -32,6 +32,7 @@ type Props = {
   onTimeChange?: (timeSec: number) => void;
   onDurationChange?: (durationSec: number) => void;
   onPlayingChange?: (playing: boolean) => void;
+  onFileSelected?: (file: File) => void;
 };
 
 export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPlayer(
@@ -45,6 +46,7 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
     onTimeChange,
     onDurationChange,
     onPlayingChange,
+    onFileSelected,
   },
   ref,
 ) {
@@ -115,6 +117,7 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
     setCurrentTime(0);
     setDuration(0);
     view.reset();
+    onFileSelected?.(file);
   }
 
   async function togglePlayback() {
