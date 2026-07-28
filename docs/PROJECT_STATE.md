@@ -2,7 +2,8 @@
 
 **Status:** ALPHA / ACTIVE DEVELOPMENT  
 **Current release:** Foundation + Rhythm Practice Alpha  
-**Deployment target:** `dance-beat-trainer-v5` Worker only
+**Deployment target:** `dance-beat-trainer-v5` Worker only  
+**Deployment trigger:** Cloudflare repository secrets added; isolated production deployment requested on 2026-07-28.
 
 ## Implemented
 
