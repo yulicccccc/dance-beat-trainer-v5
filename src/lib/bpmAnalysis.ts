@@ -22,6 +22,8 @@ type EnvelopeEstimate = {
 
 const MIN_BPM = 40;
 const MAX_BPM = 240;
+const PREFERRED_MIN_BPM = 55;
+const PREFERRED_MAX_BPM = 200;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -60,12 +62,12 @@ function scoreBpm(envelope: number[], envelopeRate: number, bpm: number) {
   const fourthPeriod = correlationAtLag(envelope, lag * 4);
 
   // Repeated pulse trains are harmonically ambiguous. Longer-period support helps
-  // retain half/double candidates while a gentle dance-tempo prior avoids always
-  // selecting an extreme 40 or 240 BPM value.
+  // keep the slower musical pulse visible instead of always selecting a fast
+  // subdivision. The prior is intentionally broad: slow compound-meter dance
+  // tracks around 55–70 BPM must not be discarded.
   const harmonicSupport = base + secondPeriod * 0.42 + fourthPeriod * 0.16;
-  const dancePrior = bpm >= 70 && bpm <= 180 ? 1 : 0.94;
-  const centerPrior = 1 - Math.min(0.035, Math.abs(bpm - 120) / 4000);
-  return harmonicSupport * dancePrior * centerPrior;
+  const usableTempoPrior = bpm >= PREFERRED_MIN_BPM && bpm <= PREFERRED_MAX_BPM ? 1 : 0.97;
+  return harmonicSupport * usableTempoPrior;
 }
 
 function uniqueCandidates(scored: Array<{ bpm: number; score: number }>) {
@@ -120,8 +122,11 @@ export function estimateTempoFromEnvelope(envelope: number[], envelopeRate: numb
     throw new Error('No stable pulse was detected.');
   }
 
-  const inDanceRange = unique.filter(item => item.bpm >= 70 && item.bpm <= 180);
-  const primary = inDanceRange[0] ?? unique[0];
+  // The previous implementation threw away any top result below 70 BPM. That
+  // changed a real 68 BPM compound-meter pulse into its 3:2 subdivision near
+  // 101 BPM. Preserve the strongest result inside a broad practical range.
+  const preferred = unique.filter(item => item.bpm >= PREFERRED_MIN_BPM && item.bpm <= PREFERRED_MAX_BPM);
+  const primary = preferred[0] ?? unique[0];
   const competing = unique.find(item => Math.abs(item.bpm - primary.bpm) >= 6) ?? unique[1] ?? primary;
   const prominence = clamp((primary.score - competing.score) / Math.max(primary.score, 0.0001), 0, 1);
   const absoluteStrength = clamp(primary.score / 1.35, 0, 1);
@@ -131,6 +136,10 @@ export function estimateTempoFromEnvelope(envelope: number[], envelopeRate: numb
     { bpm: primary.bpm, relation: 'primary' as const },
     { bpm: primary.bpm / 2, relation: 'half' as const },
     { bpm: primary.bpm * 2, relation: 'double' as const },
+    // Compound meters frequently create a 3:2 ambiguity (for example 68 vs
+    // 102 BPM). Keep both ratios visible so the user can confirm the dance pulse.
+    { bpm: primary.bpm * 2 / 3, relation: 'alternate' as const },
+    { bpm: primary.bpm * 3 / 2, relation: 'alternate' as const },
   ].filter(item => item.bpm >= MIN_BPM && item.bpm <= MAX_BPM);
 
   const candidateMap = new Map<number, BpmCandidate>();
@@ -154,7 +163,7 @@ export function estimateTempoFromEnvelope(envelope: number[], envelopeRate: numb
       score: clamp(item.score / Math.max(scored[0].score, 0.0001), 0, 1),
       relation: 'alternate',
     });
-    if (candidateMap.size >= 5) break;
+    if (candidateMap.size >= 6) break;
   }
 
   const candidates = [...candidateMap.values()]
@@ -163,7 +172,7 @@ export function estimateTempoFromEnvelope(envelope: number[], envelopeRate: numb
       if (right.relation === 'primary') return 1;
       return right.score - left.score;
     })
-    .slice(0, 5);
+    .slice(0, 6);
 
   return {
     primaryBpm: primary.bpm,
